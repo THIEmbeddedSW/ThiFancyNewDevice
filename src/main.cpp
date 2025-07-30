@@ -83,7 +83,7 @@ void setup() {
 
 #if (USE_SERIAL_DEBUG == TRUE)
 	Serial.println(" ");
-	Serial.println("===== Welcome to THI Embedded SW version " + String(programVersion) + "=====");
+	Serial.println("=== Welcome to THI Fancy New Device version " + String(programVersion) + "===");
 	Serial.println("Init finished");
 #endif
 }
