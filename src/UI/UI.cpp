@@ -56,39 +56,22 @@ static u8 ScreenIdleCounter = 0;
 static u8 ErrorWaitCounter = 0;
 static u8 UI_state = 0;
 
-// Several variables to manage the Valve and Switchpoint menues.
-static u8 MenuIndex = 0;    // which line of the menu is selected
-
 static float temperature = 0.0; // temperature value
 static float humidity = 0.0; // humidity value
 
 // Declare the call back functions
-void callBackToggleAuto(bool isOn);
-void callBackManualStart1(void);
 void callbackResetSystem(void);
 void callbackInfo(void);
-void callBackShowMoisture(void);
 
 extern MenuScreen* subMenu1;
-extern MenuScreen* subMenu2;
 
 // Define main menu
 MENU_SCREEN(mainScreen, mainItems,
-    ITEM_SUBMENU("Settings", subMenu1),
-    ITEM_SUBMENU("System", subMenu2),
-	ITEM_TOGGLE("On/off", callBackToggleAuto),
-	ITEM_COMMAND("F-Sensor Werte", callBackShowMoisture),
+    ITEM_SUBMENU("System", subMenu1),
 	ITEM_BASIC("Blink random"));
-
 
 // Create submenu and precise its parent
 MENU_SCREEN(subMenu1, subItems1,
-    ITEM_COMMAND("Ventil 1 - Start", callBackManualStart1),
-    ITEM_BASIC("Contrast"),
-    ITEM_BACK());
-
-// Create submenu and precise its parent
-MENU_SCREEN(subMenu2, subItems2,
 	ITEM_COMMAND("Info", callbackInfo),
 	ITEM_COMMAND("Neustart", callbackResetSystem),
     ITEM_BACK());
@@ -223,6 +206,7 @@ void UI_100ms()
 				UI_state = UI_MAIN;
 				ScreenIdleCounter = 0;
 				errorCode = 0;
+				ErrorWaitCounter = 0;
 			}
 			else // no button clicked
 			{
@@ -306,34 +290,6 @@ void UI_ScreenOff()
  -----------------------------------------------------------------------------*/
 void UI_ScreenOn()
 {
-//	lcd.backlight();
-}
-
-/*-----------------------------------------------------------------------------
- *  Toggle Auto Mode
- -----------------------------------------------------------------------------*/
-void callBackToggleAuto(bool isOn)
-{
-	ScreenIdleCounter=0;
-	UI_state = UI_IDLE;
-}
-
-/*-----------------------------------------------------------------------------
- *  Start Valve 1
- -----------------------------------------------------------------------------*/
-void callBackManualStart1()
-{
-	UI_state = UI_IDLE;
-	// do something
-    menu.process(BACK);
-}
-/*-----------------------------------------------------------------------------
- *  launch menue for displaying Moisture sensors
- -----------------------------------------------------------------------------*/
-void callBackShowMoisture()
-{
-	MenuIndex = 0;
-	menu.hide();
 //	lcd.backlight();
 }
 

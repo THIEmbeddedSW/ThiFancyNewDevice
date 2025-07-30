@@ -134,10 +134,10 @@ void task_1s(){
 	last_time = scd_get_system_time();
 #endif
 	ht_1s(); // call the humidity & temperature process
-	UI_1s();
 #if (USE_SERIAL_DEBUG == TRUE)
 	Serial.println("Time since: " + String(scd_time_passed(last_time)) + " ms");
 #endif
+	UI_1s();
 }
 
 

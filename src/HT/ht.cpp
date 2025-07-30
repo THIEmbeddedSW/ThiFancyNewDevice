@@ -68,7 +68,7 @@ void ht_init()
  *  recurring DHT process - 1s
  -----------------------------------------------------------------------------*/
 void ht_1s(){
-	// Reading temperature or humidity takes about 250 milliseconds!
+	// Reading temperature or humidity takes about 20 milliseconds!
 	// Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
 	// Therefore we only read/calculate one value in each cycle.
 
