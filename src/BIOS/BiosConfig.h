@@ -24,7 +24,7 @@
 #define NC_ADC_PINS	1
 
 // Baudrate for serial communication
-#define SERIAL_BAUDRATE 9600
+#define SERIAL_BAUDRATE 115200
 
 /******************************************************************************
 *   TYPE DEFINITIONS
