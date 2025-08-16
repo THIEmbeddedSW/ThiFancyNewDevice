@@ -1,58 +1,45 @@
 /******************************************************************************
 ** COPYRIGHT:           Rudi Bauer
-** DESCRIPTION:         Export header file for Bios.
+** DESCRIPTION:         Config header file for Fault Manager module.
 ** DATE CREATED:        25.12.2022
 ******************************************************************************/
 
-#ifndef BIOS_H
-#define BIOS_H
+#ifndef FAULTMANAGERCONFIG_H
+#define FAULTMANAGERCONFIG_H
 
 /******************************************************************************
 *   INCLUDE FILES
 ******************************************************************************/
-//#include <Wire.h>
-//#include <RTClib.h>
-//#include <EEPROM.h>
-//#include <FastCRC.h>
-#include <avr/wdt.h>
-
-#include "BiosConfig.h"
 
 /******************************************************************************
 *   EXTERN DEFINES AND MACROS
 ******************************************************************************/
 
-#define BTN_NONE	0
-#define BTN_RIGHT	1
-#define BTN_UP		2
-#define BTN_DOWN	3
-#define BTN_LEFT	4
-#define BTN_ENTER	5
-
-//extern FastCRC8 crc8;
-extern u16 AdcValue[NC_ADC_PINS];
-
 /******************************************************************************
 *   TYPE DEFINITIONS
 ******************************************************************************/
+typedef enum
+{
+	e_fc_0,
+	e_fc_1,
+	e_fc_2,
+	e_fc_end,	 // DO NOT CHANGE this enum parameter - it is used in internal functions to count the total number of fault codes
+}e_fault_code_t;
+
+/* DEFINES for fault codes */
+#define NUM_OF_FAULT_CODES                      3      // Total number of Fault Codes : must be equal to enum e_fc_end!!
+
+/* optional defines */
+#define FC_DHT_TEMP		e_fc_0
+#define FC_DHT_HUM		e_fc_1
+#define FC_DHT_HIDX		e_fc_2
 
 /******************************************************************************
 *   EXTERN VARIABLES AND CONSTANTS DECLARATIONS
 ******************************************************************************/
-extern void(* BiosReset) (void);
 
 /******************************************************************************
 *   EXTERN FUNCTION DECLARATIONS
 ******************************************************************************/
-extern void BiosEnableInterrupts(void);
-extern void BiosDisableInterrupts(void);
-extern void BiosIoInit(void);
-extern void BiosSerialInit(void);
-extern void BiosTimerInit(void);
-extern void BiosWdtInit(void);
-extern void BiosWdtService(void);
-extern void BiosAdcInit(void);
-extern u8 BiosGetBtnValue(void);
-extern void BiosToggleLed();
 
-#endif /* BIOS_H */
+#endif /* FAULTMANAGERCONFIG_H */

@@ -15,7 +15,8 @@
 #include "GlobalConfig.h"
 #include "BIOS/Bios.h"
 #include "HT/ht.h"
-#include <Arduino.h>
+#include "FaultManager/FaultManager.h"
+
 #include <ItemBack.h>
 #include <ItemSubMenu.h>
 #include <ItemToggle.h>
@@ -24,7 +25,7 @@
 #include <MenuScreen.h>
 //#include <display/LiquidCrystal_I2CAdapter.h>
 #include <display/LiquidCrystalAdapter.h>
-#include <input/KeyboardAdapter.h>
+//#include <input/KeyboardAdapter.h>
 #include <renderer/CharacterDisplayRenderer.h>
 
 #include "UI.h"
@@ -117,7 +118,7 @@ void UI_init()
  -----------------------------------------------------------------------------*/
 void UI_100ms()
 {
-	if (errorCode > 0) UI_state = UI_ERR;
+	if (GetGlobalFaultStatus() > 0) UI_state = UI_ERR;
 
 	switch (UI_state)
 	{
@@ -205,7 +206,7 @@ void UI_100ms()
 				menu.show();
 				UI_state = UI_MAIN;
 				ScreenIdleCounter = 0;
-				errorCode = 0;
+				SetGlobalFaultStatus(ERRCODE_NONE);
 				ErrorWaitCounter = 0;
 			}
 			else // no button clicked
@@ -213,7 +214,7 @@ void UI_100ms()
 				ErrorWaitCounter++;
 				if (ErrorWaitCounter > ERRORWAITDURATION)
 				{
-					while(1); // we wait for a watchdog reset
+					FaultManager(ERRCODE_FATAL); // need help
 				}
 			}
 			break;
@@ -226,14 +227,22 @@ void UI_100ms()
  -----------------------------------------------------------------------------*/
 void UI_1s()
 {
+	u8 errorCode = 0;
+
 	switch (UI_state)
 	{
 		case UI_IDLE:
 			errorCode = HTgetTemperature(&temperature);
-			if (errorCode > 0) break;
+			if (errorCode > 0) 
+			{
+				break;
+			}
 
 			errorCode = HTgetHumidity(&humidity);
-			if (errorCode > 0) break;
+			if (errorCode > 0)
+			{
+				break;
+			}
 
 			lcd.clear();
 			lcd.setCursor(1,0);
@@ -252,7 +261,7 @@ void UI_1s()
 			lcd.setCursor(1,0);
 			lcd.print("!! Error Code: ");
 			lcd.setCursor(4,1);
-			lcd.print((int)errorCode);
+			lcd.print((int)GetGlobalFaultStatus());
 			break;	
 
 		default:

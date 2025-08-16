@@ -8,6 +8,12 @@
 #define GLOBALCONFIG_H
 
 /******************************************************************************
+  *   INCLUDE FILES
+ ******************************************************************************/
+#include <Arduino.h>
+#include <ArduinoLog.h>
+
+/******************************************************************************
 *   TYPE DEFINITIONS
 ******************************************************************************/
 /* Standard types */
@@ -53,11 +59,6 @@ typedef unsigned long  int  bitfield32;     /* for 4 byte-bitfield */
 
 #define NULL_PTR ((void *) 0)
 
-// Error Codes
-#define ERRCODE_NONE			0
-#define ERRCODE_NO_TIME			1
-#define ERRCODE_DHT_NO_DATA	2
-
 // Debug config
 #define USE_SERIAL_DEBUG TRUE
 #define ENABLE_AVR_DEBUG FALSE
@@ -66,6 +67,5 @@ typedef unsigned long  int  bitfield32;     /* for 4 byte-bitfield */
 *   EXTERN VARIABLES AND CONSTANTS DECLARATIONS
 ******************************************************************************/
 extern char programVersion[];
-extern u8 errorCode;
 
 #endif /* GLOBALCONFIG_H */

@@ -1,58 +1,56 @@
 /******************************************************************************
 ** COPYRIGHT:           Rudi Bauer
-** DESCRIPTION:         Export header file for Bios.
+** DESCRIPTION:         Export header file for Fault Manager module.
 ** DATE CREATED:        25.12.2022
 ******************************************************************************/
 
-#ifndef BIOS_H
-#define BIOS_H
+#ifndef FAULTMANAGER_H
+#define FAULTMANAGER_H
 
 /******************************************************************************
 *   INCLUDE FILES
 ******************************************************************************/
-//#include <Wire.h>
-//#include <RTClib.h>
-//#include <EEPROM.h>
-//#include <FastCRC.h>
-#include <avr/wdt.h>
-
-#include "BiosConfig.h"
-
+#include "FaultManagerConfig.h"
 /******************************************************************************
 *   EXTERN DEFINES AND MACROS
 ******************************************************************************/
+// Global Error Codes
+#define ERRCODE_NONE			0
+#define ERRCODE_DHT_FAILED		1
+#define ERRCODE_FATAL 			99
 
-#define BTN_NONE	0
-#define BTN_RIGHT	1
-#define BTN_UP		2
-#define BTN_DOWN	3
-#define BTN_LEFT	4
-#define BTN_ENTER	5
-
-//extern FastCRC8 crc8;
-extern u16 AdcValue[NC_ADC_PINS];
 
 /******************************************************************************
 *   TYPE DEFINITIONS
 ******************************************************************************/
+/* Fault structure - defines the fault code and debounce timing */
+/* deb_inc and deb_dec must be <= deb_max */
+typedef struct
+{
+  e_fault_code_t e_fc;
+  u16   u16_deb_inc;
+  u16   u16_deb_dec;
+  u16   u16_deb_max;
+} st_fault_t;
 
 /******************************************************************************
 *   EXTERN VARIABLES AND CONSTANTS DECLARATIONS
 ******************************************************************************/
-extern void(* BiosReset) (void);
 
 /******************************************************************************
 *   EXTERN FUNCTION DECLARATIONS
 ******************************************************************************/
-extern void BiosEnableInterrupts(void);
-extern void BiosDisableInterrupts(void);
-extern void BiosIoInit(void);
-extern void BiosSerialInit(void);
-extern void BiosTimerInit(void);
-extern void BiosWdtInit(void);
-extern void BiosWdtService(void);
-extern void BiosAdcInit(void);
-extern u8 BiosGetBtnValue(void);
-extern void BiosToggleLed();
+extern void FaultManagerInit(void);
 
-#endif /* BIOS_H */
+extern bool FaultDebounce(bool b_symptom, e_fault_code_t e_fc);    		// fault debouncing
+extern u8 GetFaultDebounceStatus(e_fault_code_t e_fc);
+extern u16 GetFaultDebounceCount(e_fault_code_t e_fc);
+extern bool GetFaultErrorStatus(e_fault_code_t e_fc);
+
+extern void FaultManager(u8 FC);
+extern u8 GetGlobalFaultStatus(void);
+extern void SetGlobalFaultStatus(u8 FC);
+
+extern void fault_reset(e_fault_code_t e_fc);								// clear fault and erase fault entries in freeze frame
+
+#endif /* FAULTMANAGER_H */

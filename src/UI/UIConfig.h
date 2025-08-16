@@ -18,7 +18,7 @@
 #define SPLASHSCREENDURATION 10		// in 100ms
 #define SCREENIDLEDURATION 50	// in 100ms
 #define BUTTONIDLEDURATION 100		// in 100ms
-#define ERRORWAITDURATION 20		// in 100ms
+#define ERRORWAITDURATION 50		// in 100ms
 
 /******************************************************************************
 *   TYPE DEFINITIONS
