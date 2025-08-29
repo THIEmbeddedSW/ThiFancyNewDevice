@@ -51,6 +51,7 @@ char programVersion[] = "1.0";
 /********************************************************************/
 // Initialization
 /********************************************************************/
+#ifndef UNIT_TEST
 void setup() {
 
 	#if (ENABLE_AVR_DEBUG == TRUE)
@@ -85,6 +86,7 @@ void setup() {
 	Log.noticeln("=== Welcome to THI Fancy New Device version  %s === ", programVersion);
 	#endif
 }
+#endif
 
 /*-----------------------------------------------------------------------------
  *  Implement Timer ISR Callout
@@ -96,11 +98,12 @@ void TimerIsrCallout(){
 /*-----------------------------------------------------------------------------
  *  Endless loop
  -----------------------------------------------------------------------------*/
+#ifndef UNIT_TEST
 void loop() {
 	scd_low_prio_tasks(); // call the scheduler
 	BiosWdtService();  // Service the Watchdog
-
 }
+#endif
 
 /*-----------------------------------------------------------------------------
  *  Task 1 - high-prio
