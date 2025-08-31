@@ -39,11 +39,9 @@
 static DHT dht(DHT_PIN, DHTTYPE);
 static float t, t_prev;
 static float h, h_prev;
-// static float f;
-// static float hif;
 static float hic, hic_prev;
 
-static u8 selector;
+static uint8_t selector;
 
 
 /******************************************************************************
@@ -81,7 +79,9 @@ void ht_1s(){
 			t = dht.readTemperature();
 			if (FaultDebounce(isnan(t),FC_DHT_TEMP))
 			{
+				#if (USE_SERIAL_DEBUG == TRUE)
 				Log.errorln("HT: Error during DHT temperature data reading!!");
+				#endif
 				selector = DHT_ERROR;
 			}
 			else 
@@ -90,8 +90,10 @@ void ht_1s(){
 				if (isnan(t)) t = t_prev; else t_prev = t; 
 				selector = HUMIDITY; // for next cycle
 			}
+			#if (USE_SERIAL_DEBUG == TRUE)
 			Log.noticeln("HT: Temperature debounce state: %d", GetFaultDebounceStatus(FC_DHT_TEMP));
 			Log.noticeln("HT: Temperature debounce cnt  : %d", GetFaultDebounceCount(FC_DHT_TEMP));
+			#endif
 			break;
 
 		case HUMIDITY:
@@ -99,7 +101,9 @@ void ht_1s(){
 			// debounce result
 			if (FaultDebounce(isnan(h),FC_DHT_HUM))
 			{
+				#if (USE_SERIAL_DEBUG == TRUE)
 				Log.errorln("HT: Error during DHT humidity data reading!!");
+				#endif
 				selector = DHT_ERROR;
 			}
 			else 
@@ -108,8 +112,10 @@ void ht_1s(){
 				if (isnan(h)) h = h_prev; else h_prev = h; 
 				selector = HEAT_INDEX; // for next cycle
 			}
+			#if (USE_SERIAL_DEBUG == TRUE)
 			Log.noticeln("HT: Humidity debounce state: %d", GetFaultDebounceStatus(FC_DHT_HUM));
 			Log.noticeln("HT: Humidity debounce cnt  : %d", GetFaultDebounceCount(FC_DHT_HUM));
+			#endif
 			break;
 
 		case HEAT_INDEX:
@@ -117,7 +123,9 @@ void ht_1s(){
 			hic = dht.computeHeatIndex(t, h, false);
 			if (FaultDebounce(isnan(hic),FC_DHT_HIDX))
 			{
+				#if (USE_SERIAL_DEBUG == TRUE)
 				Log.errorln("HT: Error during DHT humidity index calculation!!");
+				#endif
 				selector = DHT_ERROR;
 			}
 			else 
@@ -126,8 +134,10 @@ void ht_1s(){
 				if (isnan(hic)) hic = hic_prev; else hic_prev = hic; 
 				selector = TEMP_CELSIUS; // for next cycle
 			}
+			#if (USE_SERIAL_DEBUG == TRUE)
 			Log.noticeln("HT: Humidity index debounce state: %d", GetFaultDebounceStatus(FC_DHT_HIDX));
 			Log.noticeln("HT: Humidity index debounce cnt  : %d", GetFaultDebounceCount(FC_DHT_HIDX));
+			#endif
 			break;
 
 		case DHT_ERROR:
@@ -160,25 +170,10 @@ void ht_1s(){
 	#endif
 }
 
-	// Reading temperature or humidity takes about 250 milliseconds!
-	// Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
-//	h = dht.readHumidity();
-	// Read temperature as Celsius (the default)
-	//t = dht.readTemperature();
-	// Read temperature as Fahrenheit (isFahrenheit = true)
-//	f = dht.readTemperature(true);
-	// Check if any reads failed and exit early (to try again).
-//	if (isnan(h) || isnan(t) || isnan(f)) return;
-	
-	// Compute heat index in Fahrenheit (the default)
-//	hif = dht.computeHeatIndex(f, h);
-	// Compute heat index in Celsius (isFahreheit = false)
-//	hic = dht.computeHeatIndex(t, h, false);
-
 /*-----------------------------------------------------------------------------
  *  providing the data
  -----------------------------------------------------------------------------*/
-u8 HTgetTemperature(float *temperature){
+uint8_t HTgetTemperature(float *temperature){
 	if (GetFaultErrorStatus(FC_DHT_TEMP)) 
 	{
 		#if (USE_SERIAL_DEBUG == TRUE)
@@ -190,7 +185,7 @@ u8 HTgetTemperature(float *temperature){
 	return ERRCODE_NONE;
 }
 
-u8 HTgetHumidity(float *humidity){
+uint8_t HTgetHumidity(float *humidity){
 	if (GetFaultErrorStatus(FC_DHT_HUM)) 
 	{
 		#if (USE_SERIAL_DEBUG == TRUE)

@@ -28,9 +28,9 @@
 typedef struct
 {
   e_fault_code_t e_fc;
-  u16   u16_deb_inc;
-  u16   u16_deb_dec;
-  u16   u16_deb_max;
+  u16   deb_inc;
+  u16   deb_dec;
+  u16   deb_max;
 } st_fault_t;
 
 /******************************************************************************

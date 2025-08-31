@@ -31,8 +31,8 @@ typedef enum
 typedef struct
 {
   st_fault_t st_fault;
-  u8    u8_deb_state;
-  u16   u16_deb_cnt;
+  u8    deb_state;
+  u16   deb_cnt;
 } st_fault_generic_t;
 
 
@@ -72,8 +72,8 @@ void fault_init (st_fault_t* pst_ext_fault)
     if(e_fc < e_fc_end)
     {
     	ast_fault_array[e_fc].st_fault        = *pst_ext_fault;
-        ast_fault_array[e_fc].u16_deb_cnt     = 0;
-        ast_fault_array[e_fc].u8_deb_state    = DEB_STATE_PASS;
+        ast_fault_array[e_fc].deb_cnt     = 0;
+        ast_fault_array[e_fc].deb_state    = DEB_STATE_PASS;
     }
 }
 
@@ -92,14 +92,14 @@ static void fault_increment (e_fault_code_t e_fc)
 	st_Fault = ast_fault_array[e_fc].st_fault;
 
 	// Prevent counter overflow
-    if ( ( st_Fault.u16_deb_max - ast_fault_array[e_fc].u16_deb_cnt ) < st_Fault.u16_deb_inc )
+    if ( ( st_Fault.deb_max - ast_fault_array[e_fc].deb_cnt ) < st_Fault.deb_inc )
     {
-    	ast_fault_array[e_fc].u16_deb_cnt = st_Fault.u16_deb_max;
+    	ast_fault_array[e_fc].deb_cnt = st_Fault.deb_max;
     }
     // Increment fault counter
     else
     {
-    	ast_fault_array[e_fc].u16_deb_cnt += st_Fault.u16_deb_inc;
+    	ast_fault_array[e_fc].deb_cnt += st_Fault.deb_inc;
     }
 }
 
@@ -118,14 +118,14 @@ static void fault_decrement (e_fault_code_t e_fc)
 	st_Fault = ast_fault_array[e_fc].st_fault;
 
 	// Prevent counter underflow
-    if (  st_Fault.u16_deb_dec > ast_fault_array[e_fc].u16_deb_cnt  )
+    if (  st_Fault.deb_dec > ast_fault_array[e_fc].deb_cnt  )
     {
-    	ast_fault_array[e_fc].u16_deb_cnt = 0;
+    	ast_fault_array[e_fc].deb_cnt = 0;
     }
     // Decrement fault counter
     else
     {
-    	ast_fault_array[e_fc].u16_deb_cnt -= st_Fault.u16_deb_dec;
+    	ast_fault_array[e_fc].deb_cnt -= st_Fault.deb_dec;
     }
 }
 
@@ -141,21 +141,21 @@ void FaultManagerInit()
 	/* configure fault parameters */
 	/* Fault code 0 */
 	st_tmp_fault.e_fc = e_fc_0;  // temperature read error
-	st_tmp_fault.u16_deb_dec = 3;
-	st_tmp_fault.u16_deb_inc = 1;
-	st_tmp_fault.u16_deb_max = 3;
+	st_tmp_fault.deb_dec = 3;
+	st_tmp_fault.deb_inc = 1;
+	st_tmp_fault.deb_max = 3;
 	fault_init(&st_tmp_fault);
 	/* Fault code 1 */
 	st_tmp_fault.e_fc = e_fc_1;  // humidity read error
-	st_tmp_fault.u16_deb_dec = 3;
-	st_tmp_fault.u16_deb_inc = 1;
-	st_tmp_fault.u16_deb_max = 3;
+	st_tmp_fault.deb_dec = 3;
+	st_tmp_fault.deb_inc = 1;
+	st_tmp_fault.deb_max = 3;
 	fault_init(&st_tmp_fault);
 	/* Fault code 2 */
 	st_tmp_fault.e_fc = e_fc_2;  // humidity index calculation error
-	st_tmp_fault.u16_deb_dec = 3;
-	st_tmp_fault.u16_deb_inc = 1;
-	st_tmp_fault.u16_deb_max = 3;
+	st_tmp_fault.deb_dec = 3;
+	st_tmp_fault.deb_inc = 1;
+	st_tmp_fault.deb_max = 3;
 	fault_init(&st_tmp_fault);
 }
 
@@ -174,8 +174,8 @@ void fault_reset (e_fault_code_t e_fc)
 	#if SAVE_FAULTS_IN_FM == TRUE
 		fault_clear_freeze_frame(e_fc);
     #endif
-    ast_fault_array[e_fc].u16_deb_cnt     = 0;
-    ast_fault_array[e_fc].u8_deb_state    = DEB_STATE_PASS;
+    ast_fault_array[e_fc].deb_cnt     = 0;
+    ast_fault_array[e_fc].deb_state    = DEB_STATE_PASS;
 }
 
 /*-----------------------------------------------------------------------------
@@ -193,7 +193,7 @@ bool FaultDebounce(bool b_symptom, e_fault_code_t e_fc)
     bool b_retVal = FALSE;
 
     // Set fault state
-    switch (ast_fault_array[e_fc].u8_deb_state)
+    switch (ast_fault_array[e_fc].deb_state)
     {
         // Everything okay
         case DEB_STATE_PASS:
@@ -204,14 +204,14 @@ bool FaultDebounce(bool b_symptom, e_fault_code_t e_fc)
                 fault_increment(e_fc);
 
                 //fault increment() ensures that u16_deb_cnt is not greater than u16_deb_max
-                if (ast_fault_array[e_fc].u16_deb_cnt == ast_fault_array[e_fc].st_fault.u16_deb_max)
+                if (ast_fault_array[e_fc].deb_cnt == ast_fault_array[e_fc].st_fault.deb_max)
                 {
-                 	ast_fault_array[e_fc].u8_deb_state = DEB_STATE_FAIL_UNSAVED;
+                 	ast_fault_array[e_fc].deb_state = DEB_STATE_FAIL_UNSAVED;
                 }
                 else
                 {
                     // Set symptom only
-                 	ast_fault_array[e_fc].u8_deb_state = DEB_STATE_SYM;
+                 	ast_fault_array[e_fc].deb_state = DEB_STATE_SYM;
                 }
 				#if SAVE_FAULTS_IN_FM == TRUE
                	// Collect freeze frame data when symptom is set
@@ -229,7 +229,7 @@ bool FaultDebounce(bool b_symptom, e_fault_code_t e_fc)
             {
                 // Decrement debounce counter
                 fault_decrement(e_fc);
-                ast_fault_array[e_fc].u8_deb_state = DEB_STATE_NO_SYM;
+                ast_fault_array[e_fc].deb_state = DEB_STATE_NO_SYM;
             }
             else
             {
@@ -238,9 +238,9 @@ bool FaultDebounce(bool b_symptom, e_fault_code_t e_fc)
 
 				// Fault detected
                 // u16_deb_cnt will always be less than or equal to u16_deb_max
-				if (ast_fault_array[e_fc].u16_deb_cnt == ast_fault_array[e_fc].st_fault.u16_deb_max)
+				if (ast_fault_array[e_fc].deb_cnt == ast_fault_array[e_fc].st_fault.deb_max)
 				{
-					ast_fault_array[e_fc].u8_deb_state = DEB_STATE_FAIL_UNSAVED;
+					ast_fault_array[e_fc].deb_state = DEB_STATE_FAIL_UNSAVED;
 					bitSet(globalFaultCode,e_fc);
 				}
             }
@@ -256,14 +256,14 @@ bool FaultDebounce(bool b_symptom, e_fault_code_t e_fc)
                 fault_increment(e_fc);
                 // Fault detected
                 // u16_deb_cnt will always be less than or equal to u16_deb_max
-				if (ast_fault_array[e_fc].u16_deb_cnt == ast_fault_array[e_fc].st_fault.u16_deb_max)
+				if (ast_fault_array[e_fc].deb_cnt == ast_fault_array[e_fc].st_fault.deb_max)
 				{
-					ast_fault_array[e_fc].u8_deb_state = DEB_STATE_FAIL_UNSAVED;
+					ast_fault_array[e_fc].deb_state = DEB_STATE_FAIL_UNSAVED;
 					bitSet(globalFaultCode,e_fc);
 				}
 				else
 				{
-					ast_fault_array[e_fc].u8_deb_state = DEB_STATE_SYM;
+					ast_fault_array[e_fc].deb_state = DEB_STATE_SYM;
 				}
             }
             else
@@ -273,12 +273,12 @@ bool FaultDebounce(bool b_symptom, e_fault_code_t e_fc)
             }
 
             // Fault is cleared, delete freeze frame data
-            if (ast_fault_array[e_fc].u16_deb_cnt == 0)
+            if (ast_fault_array[e_fc].deb_cnt == 0)
             {
 				#if SAVE_FAULTS_IN_FM == TRUE
                		fault_clear_freeze_frame(e_fc);
 				#endif
-                ast_fault_array[e_fc].u8_deb_state = DEB_STATE_PASS;
+                ast_fault_array[e_fc].deb_state = DEB_STATE_PASS;
             }
 
             break;
@@ -299,9 +299,9 @@ bool FaultDebounce(bool b_symptom, e_fault_code_t e_fc)
                 fault_increment(e_fc);
             }
 
-            if (ast_fault_array[e_fc].u16_deb_cnt == 0) 
+            if (ast_fault_array[e_fc].deb_cnt == 0) 
 			{
-				ast_fault_array[e_fc].u8_deb_state = DEB_STATE_PASS;
+				ast_fault_array[e_fc].deb_state = DEB_STATE_PASS;
 				bitClear(globalFaultCode,e_fc);
 
 			}
@@ -309,13 +309,13 @@ bool FaultDebounce(bool b_symptom, e_fault_code_t e_fc)
         }
 
 		// Go to pass on undefined state
-        default:  ast_fault_array[e_fc].u8_deb_state = DEB_STATE_PASS;
+        default:  ast_fault_array[e_fc].deb_state = DEB_STATE_PASS;
 
     }
 
     // Return fail state
-    if (      (ast_fault_array[e_fc].u8_deb_state == DEB_STATE_FAIL_UNSAVED)
-           || (ast_fault_array[e_fc].u8_deb_state == DEB_STATE_FAIL_SAVED)     )
+    if (      (ast_fault_array[e_fc].deb_state == DEB_STATE_FAIL_UNSAVED)
+           || (ast_fault_array[e_fc].deb_state == DEB_STATE_FAIL_SAVED)     )
     {
         b_retVal = TRUE;
     }
@@ -330,8 +330,8 @@ bool GetFaultErrorStatus(e_fault_code_t e_fc)
 {
     bool b_retVal = FALSE;
 
-    if (      (ast_fault_array[e_fc].u8_deb_state == DEB_STATE_FAIL_UNSAVED)
-           || (ast_fault_array[e_fc].u8_deb_state == DEB_STATE_FAIL_SAVED)     )
+    if (      (ast_fault_array[e_fc].deb_state == DEB_STATE_FAIL_UNSAVED)
+           || (ast_fault_array[e_fc].deb_state == DEB_STATE_FAIL_SAVED)     )
     {
         b_retVal = TRUE;
     }
@@ -344,7 +344,7 @@ bool GetFaultErrorStatus(e_fault_code_t e_fc)
  -----------------------------------------------------------------------------*/
 u8 GetFaultDebounceStatus(e_fault_code_t e_fc)
 {
-    return ast_fault_array[e_fc].u8_deb_state;
+    return ast_fault_array[e_fc].deb_state;
 }
 
 /*-----------------------------------------------------------------------------
@@ -352,7 +352,7 @@ u8 GetFaultDebounceStatus(e_fault_code_t e_fc)
  -----------------------------------------------------------------------------*/
 u16 GetFaultDebounceCount(e_fault_code_t e_fc)
 {
-    return ast_fault_array[e_fc].u16_deb_cnt;
+    return ast_fault_array[e_fc].deb_cnt;
 }
 
 /*-----------------------------------------------------------------------------
