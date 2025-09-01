@@ -5,16 +5,13 @@
   ******************************************************************************/
 
 /******************************************************************************
- *  COMPILER SWITCHES
- ******************************************************************************/
-
-/******************************************************************************
   *   INCLUDE FILES
  ******************************************************************************/
 #include "GlobalConfig.h"
 #include "DHT.h"
 #include "BIOS/Bios.h"
 #include "FaultManager/FaultManager.h"
+#include "UI/UI.h"
 
 #include "ht.h"
 
@@ -25,12 +22,11 @@
 //#define DHTTYPE DHT22 // DHT 22 (AM2302), AM2321
 //#define DHTTYPE DHT21 // DHT 21 (AM2301)
 
-#define TEMP_CELSIUS 1
+#define TEMP_CELSIUS 	1
 #define TEMP_FAHRENHEIT 2
-#define HUMIDITY 3
-#define HEAT_INDEX 4
-#define DHT_ALL 5
-#define DHT_ERROR 6
+#define HUMIDITY 		3
+#define HEAT_INDEX 		4
+#define DHT_ERROR 		99
 
 /******************************************************************************
  *   LOCAL VARIABLES AND CONSTANTS
@@ -42,20 +38,43 @@ static float h, h_prev;
 static float hic, hic_prev;
 
 static uint8_t selector;
+static float t_threshold = 30.0; // threshold for temperature warning
+static float delta = 0.1;	     // hysteresis	
 
 
 /******************************************************************************
  *   EXPORTED VARIABLES AND CONSTANTS (AS EXTERN IN H-FILES)
  ******************************************************************************/
+bool over_threshold = false;
 
 /******************************************************************************
 *   PRIVATE FUNCTIONS
 ******************************************************************************/
+void HeatMonitor()
+{
+	if (!over_threshold) // we are below threshold
+	{
+		if (t >= t_threshold) // threshold exceeded
+		{
+			over_threshold = TRUE;
+			UI_HeatAlarmOn();
+		}
+	}
+	else // we are over the threshold
+	{
+		if (t < (t_threshold - delta)) // back below threshold - hysteresis
+		{
+			over_threshold = FALSE;
+			UI_HeatAlarmOff();
+		}
+	}
+}
+
 /******************************************************************************
   *   EXPORTED FUNCTIONS (AS EXTERN IN H-FILES)
  ******************************************************************************/
 /*-----------------------------------------------------------------------------
- *  initialization of user interface
+ *  initialization dht sensor
  -----------------------------------------------------------------------------*/
 void ht_init()
 {
@@ -65,9 +84,10 @@ void ht_init()
 }
 
 /*-----------------------------------------------------------------------------
- *  recurring DHT process - 1s
+ *  recurring DHT process - 500ms
  -----------------------------------------------------------------------------*/
-void ht_1s(){
+void ht_500ms()
+{
 	// Reading temperature or humidity takes about 20 milliseconds!
 	// Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
 	// Therefore we only read/calculate one value in each cycle.
@@ -80,19 +100,20 @@ void ht_1s(){
 			if (FaultDebounce(isnan(t),FC_DHT_TEMP))
 			{
 				#if (USE_SERIAL_DEBUG == TRUE)
-				Log.errorln("HT: Error during DHT temperature data reading!!");
+				Log.errorln("HT: Error in DHT temp reading!");
 				#endif
 				selector = DHT_ERROR;
 			}
 			else 
 			{
-				// if we have a fault symptom, we stay on previous value, until symptom turns into error
-				if (isnan(t)) t = t_prev; else t_prev = t; 
 				selector = HUMIDITY; // for next cycle
 			}
+			// if we have a fault symptom, we stay on previous value, until symptom turns into error
+			if (isnan(t)) t = t_prev; else t_prev = t; 
+
 			#if (USE_SERIAL_DEBUG == TRUE)
-			Log.noticeln("HT: Temperature debounce state: %d", GetFaultDebounceStatus(FC_DHT_TEMP));
-			Log.noticeln("HT: Temperature debounce cnt  : %d", GetFaultDebounceCount(FC_DHT_TEMP));
+			Log.noticeln("HT: Temp debounce state: %d", GetFaultDebounceStatus(FC_DHT_TEMP));
+			Log.noticeln("HT: Temp debounce cnt  : %d", GetFaultDebounceCount(FC_DHT_TEMP));
 			#endif
 			break;
 
@@ -102,20 +123,16 @@ void ht_1s(){
 			if (FaultDebounce(isnan(h),FC_DHT_HUM))
 			{
 				#if (USE_SERIAL_DEBUG == TRUE)
-				Log.errorln("HT: Error during DHT humidity data reading!!");
+				Log.errorln("HT: Error in DHT humidity  reading!");
 				#endif
 				selector = DHT_ERROR;
 			}
 			else 
 			{
-				// if we have a fault symptom, we stay on previous value, until symptom turns into error
-				if (isnan(h)) h = h_prev; else h_prev = h; 
 				selector = HEAT_INDEX; // for next cycle
 			}
-			#if (USE_SERIAL_DEBUG == TRUE)
-			Log.noticeln("HT: Humidity debounce state: %d", GetFaultDebounceStatus(FC_DHT_HUM));
-			Log.noticeln("HT: Humidity debounce cnt  : %d", GetFaultDebounceCount(FC_DHT_HUM));
-			#endif
+			// if we have a fault symptom, we stay on previous value, until symptom turns into error
+			if (isnan(h)) h = h_prev; else h_prev = h; 
 			break;
 
 		case HEAT_INDEX:
@@ -124,20 +141,16 @@ void ht_1s(){
 			if (FaultDebounce(isnan(hic),FC_DHT_HIDX))
 			{
 				#if (USE_SERIAL_DEBUG == TRUE)
-				Log.errorln("HT: Error during DHT humidity index calculation!!");
+				Log.errorln("HT: Error in DHT hum index calculation!");
 				#endif
 				selector = DHT_ERROR;
 			}
 			else 
 			{
-				// if we have a fault symptom, we stay on previous value, until symptom turns into error
-				if (isnan(hic)) hic = hic_prev; else hic_prev = hic; 
 				selector = TEMP_CELSIUS; // for next cycle
 			}
-			#if (USE_SERIAL_DEBUG == TRUE)
-			Log.noticeln("HT: Humidity index debounce state: %d", GetFaultDebounceStatus(FC_DHT_HIDX));
-			Log.noticeln("HT: Humidity index debounce cnt  : %d", GetFaultDebounceCount(FC_DHT_HIDX));
-			#endif
+			// if we have a fault symptom, we stay on previous value, until symptom turns into error
+			if (isnan(hic)) hic = hic_prev; else hic_prev = hic; 
 			break;
 
 		case DHT_ERROR:
@@ -148,26 +161,16 @@ void ht_1s(){
 			selector = TEMP_CELSIUS;
 			break;
 
-		case DHT_ALL:
-			// Read temperature as Celsius (the default)
-			t = dht.readTemperature(false, true);
-			// Read humidity
-			h = dht.readHumidity(true);
-			// Compute heat index in Celsius (isFahreheit = false)
-			if (isnan(h) || isnan(t)) selector = DHT_ERROR;
-			else
-			{
-				hic = dht.computeHeatIndex(t, h, false);
-			}
-			break;
-
 		default:
 			break;
 	}
 
 	#if (USE_SERIAL_DEBUG == TRUE)
-	Log.noticeln("HT: Humidity %F %% Temperature %F °C Heat index %F", h, t, hic);
+	Log.noticeln("HT: Temperature %F °C Humidity %F %% Heat index %F", t, h, hic);
 	#endif
+
+	// in case no error occurred, we can do the heat monitor function
+	if (selector != DHT_ERROR) HeatMonitor();
 }
 
 /*-----------------------------------------------------------------------------
@@ -177,7 +180,7 @@ uint8_t HTgetTemperature(float *temperature){
 	if (GetFaultErrorStatus(FC_DHT_TEMP)) 
 	{
 		#if (USE_SERIAL_DEBUG == TRUE)
-		Log.errorln("HT: No valid temperature from DHT sensor!");
+		Log.errorln("HT: No valid temperature!");
 		#endif
 		return ERRCODE_DHT_FAILED;
 	}
@@ -189,10 +192,41 @@ uint8_t HTgetHumidity(float *humidity){
 	if (GetFaultErrorStatus(FC_DHT_HUM)) 
 	{
 		#if (USE_SERIAL_DEBUG == TRUE)
-		Log.errorln("HT: No valid humidity from DHT sensor!");
+		Log.errorln("HT: No valid humidity!");
 		#endif
 		return ERRCODE_DHT_FAILED;
 	}
 	*humidity = h;
 	return ERRCODE_NONE;
+}
+
+uint8_t HTgetHeatIndex(float *heat_index)
+{
+	if (GetFaultErrorStatus(FC_DHT_HIDX)) 
+	{
+		#if (USE_SERIAL_DEBUG == TRUE)
+		Log.errorln("HT: No valid heat index!");
+		#endif
+		return ERRCODE_DHT_FAILED;
+	}
+	*heat_index = hic;
+	return ERRCODE_NONE;
+}
+
+/*-----------------------------------------------------------------------------
+ *  setting the data (for test purposes)
+ -----------------------------------------------------------------------------*/
+void HTsetTemperature(float temperature)
+{
+	t = temperature;
+}
+
+void HTsetHumidity(float humidity)
+{
+	h = humidity;
+}
+
+void HTsetHeatIndex(float heat_index)
+{
+	hic = heat_index;
 }

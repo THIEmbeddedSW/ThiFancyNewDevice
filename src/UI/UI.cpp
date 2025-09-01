@@ -42,23 +42,28 @@
 #define UI_INIT 1
 #define UI_IDLE 2
 #define UI_MAIN 3
+#define UI_HEATALARM 4
 #define UI_ERR 99
 
 #define UI_TIMEMENUCOUNT 3  // number of menu entries
-
 #define NC_BTN_CLICKS_ACCEL 5  // after this number of button clicks we accelerate
+#define UI_HT_DISPLAY_TIME 10 // time in units of 100ms to display HT values in idle mode
 
 /******************************************************************************
  *   LOCAL VARIABLES AND CONSTANTS
  ******************************************************************************/
-static u8 btnValue = 0; //Variable to hold current button value
-static u8 SplashScreenCounter = 0;
-static u8 ScreenIdleCounter = 0;
-static u8 ErrorWaitCounter = 0;
-static u8 UI_state = 0;
+static uint8_t btnValue = 0; //Variable to hold current button value
+static uint8_t SplashScreenCounter = 0;
+static uint8_t ScreenIdleCounter = 0;
+static uint8_t ErrorWaitCounter = 0;
+static uint8_t UI_state = 0;
+static uint8_t errorCode = 0;
 
-static float temperature = 0.0; // temperature value
-static float humidity = 0.0; // humidity value
+// data for display of humidity & temperature
+static float value = 0.0; // value from HT component
+static uint8_t ht_delay_cnt = 10;
+static	bool toggle_display_ht = TRUE;
+static bool heat_alarm = false;
 
 // Declare the call back functions
 void callbackResetSystem(void);
@@ -95,6 +100,126 @@ MENU_SCREEN(subMenu1, subItems1,
 /******************************************************************************
 *   PRIVATE FUNCTIONS
 ******************************************************************************/
+/*-----------------------------------------------------------------------------
+ *  manage display of humidity and temperature values
+ -----------------------------------------------------------------------------*/
+static uint8_t UI_display_HT()
+{
+
+	if (ht_delay_cnt < UI_HT_DISPLAY_TIME) ht_delay_cnt++;
+	else
+	{
+		ht_delay_cnt = 0;
+		errorCode = HTgetTemperature(&value); // get the temperature value
+		if (errorCode > 0) // error occurred
+		{
+			lcd.clear();
+			lcd.setCursor(0,0);
+			lcd.print("!Error code ");
+			lcd.setCursor(12,0);
+			lcd.print(errorCode);
+			lcd.setCursor(0,1);
+			lcd.print("no Temp value");
+			return errorCode;
+		}
+		else // display the data
+		{
+			lcd.clear();
+			lcd.setCursor(0, 0);
+			lcd.print("T : ");
+			lcd.print(value);
+			lcd.print(" \xDF" "C");
+		}
+
+		if (toggle_display_ht) // we display alternately humidity and heat index
+		{
+			errorCode = HTgetHumidity(&value); // get the humidity value
+			if (errorCode > 0) // error occurred
+			{
+				lcd.clear();
+				lcd.setCursor(0,0);
+				lcd.print("!Error code ");
+				lcd.setCursor(12,0);
+				lcd.print(errorCode);
+				lcd.setCursor(0,1);
+				lcd.print("no Hum value");
+				return errorCode;
+			}
+			else // display the data
+			{
+				lcd.setCursor(0, 1);
+				lcd.print("H : ");
+				lcd.print(value);
+				lcd.print(" %");
+			}
+		}
+		else // display heat index	
+		{
+			errorCode = HTgetHeatIndex(&value); // get the heat index value
+			if (errorCode > 0) // error occurred
+			{
+				lcd.clear();
+				lcd.setCursor(0,0);
+				lcd.print("!Error code ");
+				lcd.setCursor(12,0);
+				lcd.print(errorCode);
+				lcd.setCursor(0,1);
+				lcd.print("no Heat Idx value");
+				return errorCode;
+			}
+			else // display the data
+			{
+				lcd.setCursor(0, 1);
+				lcd.print("HI: ");
+				lcd.print(value);
+				lcd.print(" \xDF" "C");
+			}
+		}
+		toggle_display_ht = !toggle_display_ht; // toggle for next time
+	}
+	return errorCode;
+}
+
+/*-----------------------------------------------------------------------------
+ *  display heat alarm
+ -----------------------------------------------------------------------------*/
+static uint8_t UI_display_HeatAlarm()
+{
+
+	if (ht_delay_cnt < UI_HT_DISPLAY_TIME) ht_delay_cnt++;
+	else
+	{
+		errorCode = HTgetTemperature(&value); // get the temperature value
+		if (errorCode > 0) // error occurred
+		{
+			lcd.clear();
+			lcd.setCursor(0,0);
+			lcd.print("!Error code ");
+			lcd.setCursor(12,0);
+			lcd.print(errorCode);
+			lcd.setCursor(0,1);
+			lcd.print("no Temp value");
+			return errorCode;
+		}
+		else
+		{
+			lcd.clear();
+			ht_delay_cnt = 0;
+			if (toggle_display_ht)
+			{
+				lcd.setCursor(0,0);
+				lcd.print("! HEAT ALARM !");
+			}
+			lcd.setCursor(0,1);
+			lcd.print("T : ");
+			lcd.print(value);
+			lcd.print(" \xDF" "C");
+			toggle_display_ht = !toggle_display_ht; // toggle for next time
+		}
+	}
+	return errorCode;
+}
+
 
 /******************************************************************************
   *   EXPORTED FUNCTIONS (AS EXTERN IN H-FILES)
@@ -118,8 +243,7 @@ void UI_init()
  -----------------------------------------------------------------------------*/
 void UI_100ms()
 {
-	if (GetGlobalFaultStatus() > 0) UI_state = UI_ERR;
-
+	// state machine to decide, what we shall display
 	switch (UI_state)
 	{
 		case UI_SPLASH:
@@ -139,6 +263,10 @@ void UI_100ms()
 				UI_state = UI_MAIN;
 				ScreenIdleCounter = 0;
 			}
+			else
+			{
+				UI_display_HT(); // update display with values
+			}
 			break;
 
 		case UI_MAIN:
@@ -147,7 +275,7 @@ void UI_100ms()
 			if (btnValue == BTN_NONE) // switch screen on, before accepting any selection
 			{
 				ScreenIdleCounter++;
-				if (ScreenIdleCounter >= (u16)SCREENIDLEDURATION)
+				if (ScreenIdleCounter >= (uint16_t)SCREENIDLEDURATION)
 				{
 					ScreenIdleCounter = 0;
 					menu.setScreen(mainScreen);
@@ -218,56 +346,32 @@ void UI_100ms()
 				}
 			}
 			break;
-	}
-	return;
-}
 
-/*-----------------------------------------------------------------------------
- *  recurring UI process - 1s
- -----------------------------------------------------------------------------*/
-void UI_1s()
-{
-	u8 errorCode = 0;
+		case UI_HEATALARM:
+			btnValue = BiosGetBtnValue();  // read out the Button
 
-	switch (UI_state)
-	{
-		case UI_IDLE:
-			errorCode = HTgetTemperature(&temperature);
-			if (errorCode > 0) 
+			if (btnValue != BTN_NONE)  // switch screen on 1st, before accepting any selection
 			{
-				break;
+				menu.show();
+				UI_state = UI_MAIN;
+				ScreenIdleCounter = 0;
 			}
-
-			errorCode = HTgetHumidity(&humidity);
-			if (errorCode > 0)
+			else
 			{
-				break;
+				if (UI_display_HeatAlarm()) // error occurred
+				{
+					UI_state = UI_ERR;
+					ErrorWaitCounter = 0;
+				}
 			}
-
-			lcd.clear();
-			lcd.setCursor(1,0);
-			lcd.print("T: ");
-			lcd.print(temperature);
-			lcd.print(" \xDF" "C");
-			lcd.setCursor(1,1);
-			lcd.print("H: ");
-			lcd.print(humidity);
-			lcd.print(" %");
 			break;
-
-		case UI_ERR:
-			//lcd.backlight();
-			lcd.clear();
-			lcd.setCursor(1,0);
-			lcd.print("!! Error Code: ");
-			lcd.setCursor(4,1);
-			lcd.print((int)GetGlobalFaultStatus());
-			break;	
 
 		default:
 			break;
 	}
+	return;
 }
+
 /*-----------------------------------------------------------------------------
  *  Splash screen
  -----------------------------------------------------------------------------*/
@@ -276,7 +380,7 @@ void UI_SplashScreen()
 	menu.hide();
 //	lcd.backlight();
 	lcd.setCursor(0,0);
-	lcd.print("Fancy New Device");
+	lcd.print("Fancy Device");
 	lcd.setCursor(0,1);
 	lcd.print("Version: ");
 	lcd.print(programVersion);
@@ -319,4 +423,22 @@ void callbackInfo()
 	UI_state = UI_SPLASH;
 	menu.hide();
 	UI_SplashScreen();
+}
+
+/*-----------------------------------------------------------------------------
+ *  Heat Alarm On
+ -----------------------------------------------------------------------------*/
+void UI_HeatAlarmOn()
+{
+	heat_alarm = TRUE;
+	UI_state = UI_HEATALARM;
+}
+
+/*-----------------------------------------------------------------------------
+ *  Heat Alarm On
+ -----------------------------------------------------------------------------*/
+void UI_HeatAlarmOff()
+{
+	heat_alarm = FALSE;
+	UI_state = UI_IDLE;
 }

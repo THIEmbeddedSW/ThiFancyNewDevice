@@ -33,8 +33,9 @@
 /******************************************************************************
  *   LOCAL VARIABLES AND CONSTANTS
  ******************************************************************************/
-static u16 last_time = 0;
-
+#if (USE_SERIAL_DEBUG == TRUE)
+static uint16_t last_time = 0;
+#endif
 
  /******************************************************************************
  *   EXPORTED VARIABLES AND CONSTANTS (AS EXTERN IN H-FILES)
@@ -52,8 +53,8 @@ char programVersion[] = "1.1.0";
 // Initialization
 /********************************************************************/
 #ifndef UNIT_TEST
-void setup() {
-
+void setup() 
+{
 	#if (ENABLE_AVR_DEBUG == TRUE)
 	debug_init(); // initialize the debug interface
 	#endif
@@ -65,7 +66,9 @@ void setup() {
 	BiosIoInit(); // initialize the BIOS I/O
 	BiosAdcInit(); // initialize the BIOS ADC
 	BiosTimerInit(); // initialize the BIOS timer for the scheduler
+	#if (ENABLE_AVR_DEBUG == FALSE)  // watchdog must only be active, if we do not debug
 	BiosWdtInit(); // initialize watchdog timer
+	#endif
 
 	UI_init(); // initialize the user interface
 
@@ -91,15 +94,18 @@ void setup() {
 /*-----------------------------------------------------------------------------
  *  Implement Timer ISR Callout
  -----------------------------------------------------------------------------*/
-void TimerIsrCallout(){
+void TimerIsrCallout()
+{
 	scd_high_prio_tasks();
 	scd_low_prio_counter();
 }
+
 /*-----------------------------------------------------------------------------
  *  Endless loop
  -----------------------------------------------------------------------------*/
 #ifndef UNIT_TEST
-void loop() {
+void loop() 
+{
 	scd_low_prio_tasks(); // call the scheduler
 	BiosWdtService();  // Service the Watchdog
 }
@@ -108,41 +114,45 @@ void loop() {
 /*-----------------------------------------------------------------------------
  *  Task 1 - high-prio
  -----------------------------------------------------------------------------*/
-void task_100ms_high_prio(){
+void task_100ms_high_prio()
+{
 	if (GetGlobalFaultStatus() > 0) BiosToggleLed(); // toggle the LED
 }
 
 /*-----------------------------------------------------------------------------
  *  Task 2
  -----------------------------------------------------------------------------*/
-void task_100ms(){
+void task_100ms()
+{
 	UI_100ms();
 }
 
 /*-----------------------------------------------------------------------------
  *  Task 3
  -----------------------------------------------------------------------------*/
-void task_500ms(){
+void task_500ms()
+{
 	if (GetGlobalFaultStatus() == 0) BiosToggleLed(); // toggle the LED
-}
-
-/*-----------------------------------------------------------------------------
- *  Task 4
- -----------------------------------------------------------------------------*/
-void task_1s(){
 
 	#if (USE_SERIAL_DEBUG == TRUE)
 	Log.noticeln("Main: System time: %d ms", scd_get_system_time());
     last_time = scd_get_system_time();
 	#endif
 
-	ht_1s(); // call the humidity & temperature process
+	ht_500ms(); // call the humidity & temperature process
 
 	#if (USE_SERIAL_DEBUG == TRUE)
 	Log.noticeln("Main: Time since:  %d ms", scd_time_passed(last_time));
 	#endif
 
-	UI_1s(); // update UI with values
+}
+
+/*-----------------------------------------------------------------------------
+ *  Task 4
+ -----------------------------------------------------------------------------*/
+void task_1s()
+{
+
 }
 
 
