@@ -15,8 +15,8 @@
 *   EXTERN DEFINES AND MACROS
 ******************************************************************************/
 // Global Error Codes
-#define ERRCODE_NONE			0
-#define ERRCODE_DHT_FAILED		1
+#define ERRCODE_NONE			  0
+#define ERRCODE_DHT_FAILED	1
 #define ERRCODE_FATAL 			99
 
 
@@ -28,9 +28,9 @@
 typedef struct
 {
   e_fault_code_t e_fc;
-  u16   deb_inc;
-  u16   deb_dec;
-  u16   deb_max;
+  uint16_t   deb_inc;
+  uint16_t   deb_dec;
+  uint16_t   deb_max;
 } st_fault_t;
 
 /******************************************************************************
@@ -41,15 +41,20 @@ typedef struct
 *   EXTERN FUNCTION DECLARATIONS
 ******************************************************************************/
 extern void FaultManagerInit(void);
-
 extern bool FaultDebounce(bool b_symptom, e_fault_code_t e_fc);    		// fault debouncing
-extern u8 GetFaultDebounceStatus(e_fault_code_t e_fc);
-extern u16 GetFaultDebounceCount(e_fault_code_t e_fc);
+extern void FaultManager(uint8_t FC);
+
+extern uint8_t GetFaultDebounceStatus(e_fault_code_t e_fc);
+extern uint16_t GetFaultDebounceCount(e_fault_code_t e_fc);
 extern bool GetFaultErrorStatus(e_fault_code_t e_fc);
 
-extern void FaultManager(u8 FC);
-extern u8 GetGlobalFaultStatus(void);
-extern void SetGlobalFaultStatus(u8 FC);
+#if SAVE_FAULTS_IN_FM == TRUE
+extern void fault_memory_write_proc(void);                //background process for writing fault record in FM
+extern bool b_fault_memory_clear(void);										// clear fault memory
+#endif
+
+extern uint8_t GetGlobalFaultStatus(void);
+extern void SetGlobalFaultStatus(uint8_t FC);
 
 extern void fault_reset(e_fault_code_t e_fc);								// clear fault and erase fault entries in freeze frame
 

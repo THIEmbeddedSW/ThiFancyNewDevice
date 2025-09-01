@@ -16,19 +16,6 @@
 /******************************************************************************
 *   TYPE DEFINITIONS
 ******************************************************************************/
-/* Standard types */
-typedef unsigned char       u8;             /* unsigned byte */
-typedef signed char         s8;             /* signed byte */
-typedef unsigned short int  u16;            /* unsigned 2 byte-word */
-typedef signed short int    s16;            /* signed 2 byte-word */
-typedef unsigned long int   u32;            /* unsigned 4 byte-word */
-typedef signed long int     s32;            /* signed 4 byte-word */
-
-/* Bitfields */
-typedef unsigned char       bitfield8;      /* for 1 byte-bitfield */
-typedef unsigned short int  bitfield16;     /* for 2 byte-bitfield */
-typedef unsigned long  int  bitfield32;     /* for 4 byte-bitfield */
-
 
 /******************************************************************************
 *   DEFINES AND MACROS
@@ -53,9 +40,6 @@ typedef unsigned long  int  bitfield32;     /* for 4 byte-bitfield */
 
 #define TRUE   1
 #define FALSE  0
-
-#define ON   1
-#define OFF  0
 
 #define NULL_PTR ((void *) 0)
 

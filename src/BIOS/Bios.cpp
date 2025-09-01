@@ -49,13 +49,13 @@
 
 // debounce threshold for button clicks
 #if (NC_ADC_PINS > 3)
-	#define ADC_DEBOUNCE_THD 200
-#elif (NC_ADC_PINS > 2)
 	#define ADC_DEBOUNCE_THD 280
-#elif (NC_ADC_PINS > 1)
+#elif (NC_ADC_PINS > 2)
 	#define ADC_DEBOUNCE_THD 400
-#else
+#elif (NC_ADC_PINS > 1)
 	#define ADC_DEBOUNCE_THD 600
+#else
+	#define ADC_DEBOUNCE_THD 800
 #endif
 
 /******************************************************************************
@@ -66,13 +66,13 @@ volatile int adcChan;
 static int AdcDebounceCnt = 0;
 
 static bool btnProcessed = FALSE;
-static u8 btnValue = BTN_NONE;
+static uint8_t btnValue = BTN_NONE;
 
 /******************************************************************************
  *   EXPORTED VARIABLES AND CONSTANTS (AS EXTERN IN H-FILES)
  ******************************************************************************/
 //FastCRC8 crc8;
-u16 AdcValue[NC_ADC_PINS];
+uint16_t AdcValue[NC_ADC_PINS];
 
 
 /******************************************************************************
@@ -163,7 +163,7 @@ void BiosWdtService()
  -----------------------------------------------------------------------------*/
 void BiosAdcInit()
 {
-	u8 i;
+	uint8_t i;
 
 	// Set for the first ADC channel.
 	  ADMUX = ADCH0;
@@ -285,7 +285,7 @@ ISR(ADC_vect)
 
 	    	// Set up for next ADC Channel.
 	    	// Uncomment the following to enable another channel.
-#if (NC_ADC_PINS > 0)
+#if (NC_ADC_PINS > 1)
 	    	ADMUX = ADCH1;
 	    	break;
 
@@ -293,7 +293,7 @@ ISR(ADC_vect)
 	    	AdcValue[0] = tempVal;
 	  	    // Set up for next ADC Channel.
 	    	// Uncomment the following to enable another channel.
-#if (NC_ADC_PINS > 1)
+#if (NC_ADC_PINS > 2)
 	    	ADMUX = ADCH2;
 	    	break;
 
@@ -301,7 +301,7 @@ ISR(ADC_vect)
 	    	AdcValue[1] = tempVal;
 	    	// Set up for next ADC Channel.
 	    	// Uncomment the following to enable another channel.
-#if (NC_ADC_PINS > 2)
+#if (NC_ADC_PINS > 3)
 	    	ADMUX = ADCH3;
 	    	break;
 
@@ -309,7 +309,7 @@ ISR(ADC_vect)
 	    	AdcValue[2] = tempVal;
 	    	// Set up for next ADC Channel.
 	    	// Uncomment the following to enable another channel.
-#if (NC_ADC_PINS > 3)
+#if (NC_ADC_PINS > 4)
 	    	ADMUX = ADCH4;
 	    	break;
 

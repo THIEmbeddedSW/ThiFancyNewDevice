@@ -66,8 +66,8 @@ extern void scd_init(void);
 
 extern void scd_suspend_tasks(bf8_suspend_tasks_t bf8_suspend_tasks);
 
-extern u16 scd_get_system_time(void);
+extern uint16_t scd_get_system_time(void);
 
-extern u16 scd_time_passed(u16);
+extern uint16_t scd_time_passed(u16);
 
 #endif /* SCHEDULER_H */

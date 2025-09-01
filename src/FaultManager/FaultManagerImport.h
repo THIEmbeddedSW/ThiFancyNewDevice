@@ -1,36 +1,20 @@
 /******************************************************************************
 ** COPYRIGHT:           Rudi Bauer
-** DESCRIPTION:         Export header file for Bios.
+** DESCRIPTION:         Import header file for generic scheduler.
 ** DATE CREATED:        25.12.2022
 ******************************************************************************/
 
-#ifndef BIOS_H
-#define BIOS_H
+#ifndef FAULT_MANAGER_IMPORT_H
+#define FAULT_MANAGER_IMPORT_H
 
 /******************************************************************************
 *   INCLUDE FILES
 ******************************************************************************/
-//#include <Wire.h>
-//#include <RTClib.h>
-//#include <EEPROM.h>
-//#include <FastCRC.h>
-#include <avr/wdt.h>
-
-#include "BiosConfig.h"
+#include "FaultManagerConfig.h"
 
 /******************************************************************************
 *   EXTERN DEFINES AND MACROS
 ******************************************************************************/
-
-#define BTN_NONE	0
-#define BTN_RIGHT	1
-#define BTN_UP		2
-#define BTN_DOWN	3
-#define BTN_LEFT	4
-#define BTN_ENTER	5
-
-//extern FastCRC8 crc8;
-extern uint16_t AdcValue[NC_ADC_PINS];
 
 /******************************************************************************
 *   TYPE DEFINITIONS
@@ -39,20 +23,14 @@ extern uint16_t AdcValue[NC_ADC_PINS];
 /******************************************************************************
 *   EXTERN VARIABLES AND CONSTANTS DECLARATIONS
 ******************************************************************************/
-extern void(* BiosReset) (void);
 
 /******************************************************************************
 *   EXTERN FUNCTION DECLARATIONS
 ******************************************************************************/
-extern void BiosEnableInterrupts(void);
-extern void BiosDisableInterrupts(void);
-extern void BiosIoInit(void);
-extern void BiosSerialInit(void);
-extern void BiosTimerInit(void);
-extern void BiosWdtInit(void);
-extern void BiosWdtService(void);
-extern void BiosAdcInit(void);
-extern uint8_t BiosGetBtnValue(void);
-extern void BiosToggleLed();
+#if SAVE_FAULTS_IN_FM == TRUE
+	extern void FaultMgrCollectFreezeFrameData(st_fault_freeze_frame_t* pst_freeze_frame, e_fault_code_t e_fc);
+	extern void FaultMgrSaveFreezeFrame(st_fault_freeze_frame_t* pst_freeze_frame);
+	extern bool FaultClear(void);
+#endif
 
-#endif /* BIOS_H */
+#endif /* FAULT_MANAGER_IMPORT_H */

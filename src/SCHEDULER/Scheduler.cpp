@@ -518,9 +518,9 @@
 	  * if we more low-prio tasks besides the background task.
 	  */
 	#if (LOW_PRIO_TASKS==TRUE)
-		static volatile u16 u16_scd_low_ctr;
+		static volatile uint16_t u16_scd_low_ctr;
 		static bool b_scd_low_ctr_changed;
-		static u16 u16_scd_low_ctr_max;
+		static uint16_t u16_scd_low_ctr_max;
 	#endif
 #endif
 
@@ -530,14 +530,14 @@
 	 (TASK_3_ENABLE_TASK_MONITOR==TRUE) || \
 	 (TASK_4_ENABLE_TASK_MONITOR==TRUE) || \
 	 (TASK_5_ENABLE_TASK_MONITOR==TRUE))
-	static u16 u16_task_monitor_start_ctr[NUM_TASKS+1];
-	static u16 u16_task_monitor_end_ctr[NUM_TASKS+1];
+	static uint16_t u16_task_monitor_start_ctr[NUM_TASKS+1];
+	static uint16_t u16_task_monitor_end_ctr[NUM_TASKS+1];
 #endif
 
 // Bitfield holding suspend flag for each task
 static bf8_suspend_tasks_t bf8_suspend_tasks_local;
 
-static u16 system_tick = 0;
+static uint16_t system_tick = 0;
 
 /******************************************************************************
  *   EXPORTED VARIABLES AND CONSTANTS (AS EXTERN IN H-FILES)
@@ -646,9 +646,9 @@ void scd_suspend_tasks(bf8_suspend_tasks_t bf8_suspend_tasks)
 void scd_high_prio_tasks(void)
 {
 	#if (HIGH_PRIO_SLICES==TRUE)
-		u16 u16_slice; // only needed, if we have slices
+		uint16_t u16_slice; // only needed, if we have slices
 	#endif
-	u16 u16_scd_local_ctr;
+	uint16_t u16_scd_local_ctr;
 
 	// increment systm tick count
 	system_tick++;
@@ -984,9 +984,9 @@ void scd_low_prio_tasks(void)
 	#if (LOW_PRIO_TASKS==TRUE)
 
 	#if (LOW_PRIO_SLICES==TRUE)
-		u16 u16_slice; // only required if we have slices
+		uint16_t u16_slice; // only required if we have slices
 	#endif
-	u16 u16_scd_local_ctr;
+	uint16_t u16_scd_local_ctr;
 
 	// we only schedule, if the counter changed
 	if (b_scd_low_ctr_changed)
@@ -1347,7 +1347,7 @@ void scd_low_prio_counter(void)
 * Return code     :  u16 system_tick
 * Description     :  Returns the system time tick.
 ******************************************************************************/
-u16 scd_get_system_time(void)
+uint16_t scd_get_system_time(void)
 {
 	// return the system tick
 	return system_tick;
@@ -1360,9 +1360,9 @@ u16 scd_get_system_time(void)
 * Return code     :  u16 time_passed
 * Description     :  Returns the time passed since the given time tick.
 ******************************************************************************/
-u16 scd_time_passed(u16 since_time)
+uint16_t scd_time_passed(u16 since_time)
 {
-	u16 time_passed;
+	uint16_t time_passed;
 
 	// check whether the since_time is in the past
 	if (system_tick >= since_time)
