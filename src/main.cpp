@@ -135,14 +135,14 @@ void task_500ms()
 	if (GetGlobalFaultStatus() == 0) BiosToggleLed(); // toggle the LED
 
 	#if (USE_SERIAL_DEBUG == TRUE)
-	Log.noticeln("Main: System time: %d ms", scd_get_system_time());
+//	Log.noticeln("Main: System time: %d ms", scd_get_system_time());
     last_time = scd_get_system_time();
 	#endif
 
 	ht_500ms(); // call the humidity & temperature process
 
 	#if (USE_SERIAL_DEBUG == TRUE)
-	Log.noticeln("Main: Time since:  %d ms", scd_time_passed(last_time));
+//	Log.noticeln("Main: Time since:  %d ms", scd_time_passed(last_time));
 	#endif
 
 }
